@@ -1,0 +1,33 @@
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: bankaccounting
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d bankaccounting"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+
+  api:
+    build: .
+    depends_on:
+      postgres: { condition: service_healthy }
+    environment:
+      ConnectionStrings__Default: "Host=postgres;Database=bankaccounting;Username=app;Password=${DB_PASSWORD}"
+      ConnectionStrings__Redis: "redis:6379"      # remove this line to run without Redis
+      Jwt__Key: ${JWT_KEY:?set JWT_KEY in .env (32+ chars)}
+      Seed__DemoUsers: "true"
+      Seed__DemoPassword: ${DEMO_PASSWORD:?set DEMO_PASSWORD in .env}
+    ports: ["8080:8080"]
+
+volumes:
+  pgdata:

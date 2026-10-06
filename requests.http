@@ -1,0 +1,75 @@
+### Phase 1 smoke test (VS Code REST Client / JetBrains HTTP client). Run top to bottom.
+@host = http://localhost:8080
+
+### 1. Login (demo users: admin / teller / auditor, password = DEMO_PASSWORD from .env)
+# @name login
+POST {{host}}/api/v1/auth/login
+Content-Type: application/json
+
+{ "username": "teller", "password": "Demo-Pass-123!" }
+
+###
+@token = {{login.response.body.accessToken}}
+
+### 2. Create a customer
+# @name customer
+POST {{host}}/api/v1/customers
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "fullName": "Asha Verma", "email": "asha@example.com" }
+
+###
+@customerId = {{customer.response.body.id}}
+
+### 3. Open two savings accounts
+# @name accA
+POST {{host}}/api/v1/accounts
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "customerId": "{{customerId}}", "product": "savings" }
+
+###
+# @name accB
+POST {{host}}/api/v1/accounts
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "customerId": "{{customerId}}", "product": "savings" }
+
+###
+@a = {{accA.response.body.id}}
+@b = {{accB.response.body.id}}
+
+### 4. Deposit 5000.00 into A (Idempotency-Key is mandatory; re-send to see the replay)
+POST {{host}}/api/v1/transactions/deposits
+Authorization: Bearer {{token}}
+Idempotency-Key: dep-demo-0001
+Content-Type: application/json
+
+{ "accountId": "{{a}}", "amount": 5000.00, "currency": "INR", "description": "Opening deposit" }
+
+### 5. Transfer 1250.50 from A to B
+POST {{host}}/api/v1/transactions/transfers
+Authorization: Bearer {{token}}
+Idempotency-Key: xfer-demo-0001
+Content-Type: application/json
+
+{ "fromAccountId": "{{a}}", "toAccountId": "{{b}}", "amount": 1250.50, "currency": "INR", "description": "Rent share" }
+
+### 6. Overdraw attempt -> 422 INSUFFICIENT_FUNDS
+POST {{host}}/api/v1/transactions/withdrawals
+Authorization: Bearer {{token}}
+Idempotency-Key: wd-demo-0001
+Content-Type: application/json
+
+{ "accountId": "{{b}}", "amount": 999999, "currency": "INR" }
+
+### 7. Balances
+GET {{host}}/api/v1/accounts/{{a}}/balance
+Authorization: Bearer {{token}}
+
+###
+GET {{host}}/api/v1/accounts/{{b}}/balance
+Authorization: Bearer {{token}}

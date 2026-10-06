@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\BuildingBlocks\BankAccounting.BuildingBlocks.csproj" />
+    <ProjectReference Include="..\Accounts\BankAccounting.Accounts.csproj" />
+    <ProjectReference Include="..\Ledger\BankAccounting.Ledger.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,10 @@
+bin/
+obj/
+.vs/
+.idea/
+*.user
+.env
+src/Host/wwwroot/
+web/node_modules/
+web/dist/
+files (2).zip
